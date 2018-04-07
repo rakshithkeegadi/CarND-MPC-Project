@@ -115,13 +115,21 @@ int main() {
 
           auto coeffs = polyfit(ptsx_transform,ptsy_transform,3);
 
-          double cte = polyeval(coeffs,0);
-          double epsi = -atan(coeffs[1]);
+          double Lf = 2.67;
+//          double cte = polyeval(coeffs,0);
           double steer_value = j[1]["steering_angle"];
           double throttle_value = j[1]["throttle"];
 
+          // predict state in 100ms
+          double latency = 0.1;
+          px = v*latency;
+          py = 0;
+          psi = -v*steer_value*latency/Lf;
+          double epsi = -atan(coeffs[1]);
+          double cte = polyeval(coeffs,0)+v*sin(epsi)*latency;
+          v+= throttle_value*latency;
           Eigen::VectorXd state(6);
-          state << 0, 0, 0, v, cte, epsi;
+          state << px, py, psi, v, cte, epsi;
 
           auto vars = mpc.Solve(state,coeffs);
 
